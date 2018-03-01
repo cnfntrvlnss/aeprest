@@ -8,3 +8,6 @@ spring:
     username: sa
     password: 
     driver-class-name: org.h2.Driver 
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8

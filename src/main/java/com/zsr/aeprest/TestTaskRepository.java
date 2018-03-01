@@ -7,6 +7,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
+import com.zsr.aeprest.entity.TestCase;
+import com.zsr.aeprest.entity.TestTask;
+
 @Repository
 public class TestTaskRepository {
 	
@@ -55,7 +58,7 @@ public class TestTaskRepository {
 			tc.setSrcPath(rs.getString(3));
 			tc.setScriptName(rs.getString(4));
 			tc.setScriptParam(rs.getString(5));
-			System.err.println("result of testtaskcase: " + rs.getString(7));
+			tc.setElapsed(rs.getInt(6));
 			if(rs.getString(7) != null) {
 				tc.setResult(TestCase.Result.valueOf(rs.getString(7)));
 			}
@@ -66,8 +69,8 @@ public class TestTaskRepository {
 			TestTask t = new TestTask();
 			t.setId(rs.getInt(1));
 			t.setName(rs.getString(2));
-			t.setStartTime(rs.getDate(3));
-			t.setEndTime(rs.getDate(4));
+			t.setStartTime(rs.getTimestamp(3));
+			t.setEndTime(rs.getTimestamp(4));
 			if(rs.getString(5) != null) {
 				t.setStatus(TestTask.Status.valueOf(rs.getString(5)));
 			}
@@ -111,14 +114,39 @@ public class TestTaskRepository {
 	 * @return
 	 */
 	public List<TestTask> findUnfinshedTask(){
-		return null;
+		final String SELECT_TASK_BYSTAT = "select id from testtask where status = ? or status = '' or status is null";
+		List<Integer> ids = jdbc.query(SELECT_TASK_BYSTAT, (rs, rn)->{		
+			return Integer.valueOf(rs.getInt(1));
+		}, TestTask.Status.RUNNING.toString());
+		List<TestTask> ret = new ArrayList<>();
+		for(int id: ids) {
+			ret.add(findTask(id));
+		}
+		return ret;
 	}
 	/**
 	 * called at the point of new task arriving.
 	 * @return
 	 */
 	public List<TestTask> findNewTask(){
-		
-		return null;
+		final String SELECT_TASK_BYNULLSTAT = "select id from testtask where status is null or status = ''";
+		List<Integer> ids = jdbc.query(SELECT_TASK_BYNULLSTAT, (rs, rn)->{
+			return Integer.valueOf(rs.getInt(1));
+		});
+		List<TestTask> ret = new ArrayList<>();
+		for(int id: ids) {
+			ret.add(findTask(id));
+		}
+		return ret;
+	}
+	
+	public void updateTask(TestTask task) {
+		final String UPDATE_TASK_PARTIAL = "update testtask set startTime=?, endTime=?, status=?, logPath=?  where id=?";
+		jdbc.update(UPDATE_TASK_PARTIAL, task.getStartTime(), task.getEndTime(), task.getStatus().toString(), task.getLogPath(), task.getId());
+	}
+	
+	public void updateTaskCase(TestCase cas, int taskId) {
+		final String UPDATE_TASKCASE_PARTIAL = "update testtaskcase set elapsedTime=?, result=?  where taskId = ? and caseId = ?;";
+		jdbc.update(UPDATE_TASKCASE_PARTIAL, cas.getElapsed(), cas.getResult().toString(), taskId, cas.getId());
 	}
 }

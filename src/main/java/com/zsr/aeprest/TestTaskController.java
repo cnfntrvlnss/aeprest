@@ -17,6 +17,9 @@ import org.springframework.web.bind.annotation.RestController;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.zsr.aeprest.entity.TestCase;
+import com.zsr.aeprest.entity.TestTask;
+import com.zsr.aeprest.internal.TestTaskMonitor;
 
 @RestController
 @RequestMapping("aep")
@@ -26,13 +29,17 @@ public class TestTaskController {
 	
 	@Autowired
 	TestTaskRepository repo;
+	@Autowired
+	TestTaskMonitor testTaskMonitor;
 	
 	@RequestMapping(value="executeTask", method=RequestMethod.POST)
 	public String execTask(@RequestBody TestTask task) {
 		
 		logger.info("get task: {}.", toString(task));
 		repo.save(task);
-		
+		synchronized(testTaskMonitor) {
+			testTaskMonitor.notifyAll();			
+		}
 		return "success";
 	}
 	
@@ -65,6 +72,7 @@ public class TestTaskController {
 		if(task == null) {
 			throw new RuntimeException(String.format("taskId %d not exist", id));
 		}
+		logger.info("after execution, testTask: {}", toString(task));
 		return task;
 	}
 	
