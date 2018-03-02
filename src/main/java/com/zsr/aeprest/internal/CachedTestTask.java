@@ -21,6 +21,8 @@ public class CachedTestTask {
 	TestTask testTask;
 	Iterator<TestCase> testCaseIter;
 	TestCase testCase;
+	long caseStartTime;
+	
 	
 	public CachedTestTask(TestTaskRepository repo, TestTask task) {
 		this.repo = repo;
@@ -47,6 +49,11 @@ public class CachedTestTask {
 		repo.updateTask(testTask);
 	}
 	
+	public void endTask(boolean b) {
+		testTask.setStatus(TestTask.Status.FAILED);
+		repo.updateTask(testTask);
+	}
+	
 	public void setStatus(TestTask.Status status) {
 		if(testTask.getStatus() != status) {
 			testTask.setStatus(status);
@@ -65,10 +72,16 @@ public class CachedTestTask {
 		return null;
 	}
 	
-	public void finishTestCase(TestCase.Result res, int elapsed) {
+	public void startTestCase() {
+		caseStartTime = System.currentTimeMillis();
+	}
+	
+	public void finishTestCase(TestCase.Result res) {
+		long caseEndTime = System.currentTimeMillis();
+		int elapsed = (int) ((caseEndTime - caseStartTime) / 1000);
 		testCase.setElapsed(elapsed);
 		testCase.setResult(res);
 		repo.updateTaskCase(testCase, testTask.getId());
-		
 	}
+
 }

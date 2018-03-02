@@ -1,7 +1,6 @@
 package com.zsr.aeprest.internal;
 
 import java.io.Closeable;
-import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -14,43 +13,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.zsr.aeprest.TestTaskRepository;
-import com.zsr.aeprest.entity.TestCase;
 import com.zsr.aeprest.entity.TestTask;
 
-class TestTaskConsumer implements Runnable{
-
-	Logger logger = LoggerFactory.getLogger(TestTaskConsumer.class);
-	CachedTestTask task;
-	
-	public TestTaskConsumer(CachedTestTask task) {
-		this.task = task;
-	}
-	
-	@Override
-	public void run() {
-		//follow interface of CachedTestTask, have task being executed.
-		logger.debug("start to execute task, taskId {},", task.getTestTask().getId());
-		task.beginTask();
-		try {
-			Thread.sleep(3000);
-			while(true) {
-				TestCase cas = task.getNextTestCase();
-				if(cas == null) break;
-				Thread.sleep(3000);
-				task.finishTestCase(TestCase.Result.PASS, 3000);
-			}
-			
-			task.endTask("C:\\Users\\zhengshr\\Downloads\\20180118150059_1_111_111_BMC_111_log.zip");
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		} finally {
-			
-		}
-		
-		
-	}
-	
-}
 
 /**
  * monitor task set, make all pending tasks to be finished, 
