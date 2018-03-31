@@ -59,7 +59,7 @@ public class TestTaskMonitor implements Runnable, Closeable {
 	
 	@Override
 	public void run() {
-		logger.info("~~~~~~start to loop task of TestTask.");
+		logger.info("~~~~~~start to monitor pending TestTask to execute.");
 		List<TestTask> tasks = repo.findUnfinshedTask();
 		//logger.debug("return from findUnfinshedTask, size: {}", tasks.size());
 		for(TestTask task: tasks) {

@@ -83,19 +83,21 @@ public class Utilities {
 		File desFile = new File(des);
 		
 		if(!desFile.exists()) {
-			desFile.mkdir();
+			if(!desFile.mkdir()) {
+				System.err.println("ERROR Utilities.copyDir failed to create dir " + desFile.toString());
+			}
 		}
 		
 		File[] fs = srcFile.listFiles();
 		if(fs == null) {
-			System.out.println("ERROR return null from File.listFiles(), dir: " + src);
+			System.err.println("ERROR return null from File.listFiles(), dir: " + src);
 			return false;
 		}
 		for(File f: fs) {
 			File subDesFile = new File(desFile, f.getName());
 			if(f.isFile()) {
 				if(!copyFile(f, subDesFile)) {
-					System.out.println("ERROR failed to copy file from " + f.getPath() + " to " + subDesFile.getPath());
+					System.err.println("ERROR failed to copy file from " + f.getPath() + " to " + subDesFile.getPath());
 					return false;
 				}
 			} else if(f.isDirectory()){

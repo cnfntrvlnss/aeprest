@@ -20,9 +20,9 @@ public class ScriptSpace {
 	static Logger logger = LoggerFactory.getLogger(ScriptSpace.class);
 	static final String scriptDir = "test/script";
 	static final String scriptBackupDir = "test/script_bck";
-	static final String ftp_ip = "100.2.36.172";
-	static final String ftp_usr = "iauto";
-	static final String ftp_pwd = "iauto";
+	static final String ftp_ip = "10.200.104.34";
+	static final String ftp_usr = "anonymous";
+	static final String ftp_pwd = "";
 	static {
 		checkdir(scriptDir, scriptBackupDir);
 	}
@@ -65,7 +65,10 @@ public class ScriptSpace {
 		}
 		
 		MyFTPClient ftp = MyFTPClient.genMyFTPClient(ftp_ip, ftp_usr, ftp_pwd, ftpPath);
-		if(ftp == null) return false;
+		if(ftp == null) {
+			logger.error("failed to connect ftp server, {},{},{},{}.", ftp_ip, ftp_usr, ftp_pwd, ftpPath);
+			return false;
+		}
 		boolean bsucc = true;
 		long startms = System.currentTimeMillis();
 		if(!ftp.updateLocalDir(dirName, rootFile, recLi, nrecLi)) {
@@ -104,11 +107,35 @@ public class ScriptSpace {
 	
 	public static String prepareScriptSpace(String taskname, String path) {
 		File myScriptDir = new File(scriptDir, taskname);
-		if(!myScriptDir.mkdir()) {
-			return null;
+		if(!myScriptDir.exists()) {
+			if(!myScriptDir.mkdir()) {
+				logger.error("failed to create dir for testtask, {}", myScriptDir);
+				return null;
+			}
 		}
 		
-		return "";
+		int stIdx = path.lastIndexOf("/");
+		int edIdx = path.length() -1;
+		if(stIdx == edIdx) {
+			stIdx = path.lastIndexOf("/", edIdx -1);
+		}
+		String pathName = path.substring(stIdx, edIdx + 1);
+		File myDirFile = new File(myScriptDir, pathName);
+		
+		if(myDirFile.exists()) {
+			if(!Utilities.deleteFile(myDirFile)) {
+				logger.error("failed to delete testDir, {}", myDirFile.toString());
+				return null;
+			}
+		}
+		if(!prepareScriptDir(path, scriptBackupDir)) {
+			return null;
+		}	
+		File backupDirFile = new File(scriptBackupDir);	
+		backupDirFile = new File(backupDirFile, pathName);
+		Utilities.copyDir(backupDirFile.toString(), myDirFile.toString());
+		
+		return myDirFile.toString();
 	}
 
 }

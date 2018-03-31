@@ -30,7 +30,7 @@ class TestTaskConsumer implements Runnable{
 	}
 	
 	
-	/*
+	/** faked run procedure, only test execution flow.
 	@Override
 	public void run() {
 		//follow interface of CachedTestTask, have task being executed.
@@ -56,6 +56,15 @@ class TestTaskConsumer implements Runnable{
 	
 	static String testLogDirDir = "C:\\Users\\zhengshr\\aeptask\\";
 	
+	static {
+		File file = new File(testLogDirDir);
+		if(!file.exists()) {
+			if(!file.mkdir()) {
+				logger.error("failed to create logDir for testTask, {}.", testLogDirDir);
+			}
+		}
+	}
+	
 	boolean prepareDir(File DirFile) {
 		if(DirFile.exists()) {
 			if(!Utilities.deleteFile(DirFile)) {
@@ -70,7 +79,9 @@ class TestTaskConsumer implements Runnable{
 		String scPath = new File("./", name).getPath();
 		if(scPath.endsWith(".jar")) {
 			cmd.append("java -jar ");
-		} 
+		} else if(scPath.endsWith(".ps1")) {
+			cmd.append("powershell ");
+		}
 //		else if(scPath.endsWith(".py")) {
 //			cmd.append("python ");
 //		}
@@ -90,6 +101,7 @@ class TestTaskConsumer implements Runnable{
 		String taskname = String.format("task_%d_%s", testTask.getId(), testTask.getName());
 		File testLogDir = new File(testLogDirDir, taskname + "_log");
 		if(!prepareDir(testLogDir)) {
+			logger.debug("cannot create testLogDir, {}.", testLogDir.toString());
 			task.endTask(false);
 			return;
 		}
@@ -102,6 +114,7 @@ class TestTaskConsumer implements Runnable{
 			String workDir = ScriptSpace.prepareScriptSpace(taskname, cas.getSrcPath());
 			if(workDir == null) {
 				task.endTask(false);
+				logger.debug("cannot prepare script space, {},{}.", taskname, cas.getSrcPath());
 				return;
 			}
 			String cmd = prepareCommandLine(cas.getScriptName(), cas.getScriptParam());
