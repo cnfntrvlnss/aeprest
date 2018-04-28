@@ -29,6 +29,7 @@ public class ScriptTaskController {
 	@RequestMapping(value="executeTask", method=RequestMethod.POST)
 	public String execTask(@RequestBody ItmsScriptTask task) {
 		logger.info("receive task: {}", toString(task));
+		task.setStatus(ItmsScriptTask.Status.WAIT);
 		repo.save(task);
 		
 		return "success";
@@ -57,9 +58,11 @@ public class ScriptTaskController {
 	}
 	
 	@RequestMapping(value="task/{taskId}", method=RequestMethod.DELETE)
-	public void deleteTask(@PathVariable("taskId") int id) {
+	public boolean deleteTask(@PathVariable("taskId") int id) {
 		logger.debug("deleteTask {}", id);
 		repo.deleteById(id);
+		
+		return true;
 	}
 
 	

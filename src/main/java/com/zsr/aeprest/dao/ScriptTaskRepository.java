@@ -78,7 +78,7 @@ public class ScriptTaskRepository {
 		jdbc.update(insert_script_param, pss);
 		
 		//insert itmsscripttask table.
-		jdbc.update(INSERT_TASK, task.getTaskId(), task.getProjectName(), task.getTestCaseNumber(), task.getStatus());
+		jdbc.update(INSERT_TASK, task.getTaskId(), task.getProjectName(), task.getTestCaseNumber(), task.getStatus().toString());
 		
 	}
 	
