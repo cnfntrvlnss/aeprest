@@ -1,4 +1,4 @@
-package com.zsr.aeprest;
+package com.zsr.aeprest.dao;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -89,7 +89,7 @@ public class TestTaskRepository {
 	List<Integer> findAllId(){
 		String SELECT_TASKID = "select id from testtask;";
 		return jdbc.query(SELECT_TASKID, (rs, rn)->{
-			return Integer.valueOf(0);
+			return rs.getInt(1);
 		});
 	}
 	

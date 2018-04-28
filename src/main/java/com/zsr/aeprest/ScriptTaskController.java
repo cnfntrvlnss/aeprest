@@ -1,8 +1,6 @@
 package com.zsr.aeprest;
 
-
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import org.slf4j.Logger;
@@ -17,72 +15,53 @@ import org.springframework.web.bind.annotation.RestController;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.zsr.aeprest.dao.TestTaskRepository;
-import com.zsr.aeprest.entity.TestCase;
-import com.zsr.aeprest.entity.TestTask;
-import com.zsr.aeprest.internal.TestTaskMonitor;
+import com.zsr.aeprest.dao.ScriptTaskRepository;
+import com.zsr.aeprest.entity.ItmsScriptTask;
 
 @RestController
-@RequestMapping("aep_bk")
-public class TestTaskController {
-
-	static Logger logger = LoggerFactory.getLogger(TestTaskController.class);
+@RequestMapping("aep")
+public class ScriptTaskController {
+	static Logger logger = LoggerFactory.getLogger(ScriptTaskController.class);
 	
 	@Autowired
-	TestTaskRepository repo;
-	@Autowired
-	TestTaskMonitor testTaskMonitor;
+	ScriptTaskRepository repo;
 	
 	@RequestMapping(value="executeTask", method=RequestMethod.POST)
-	public String execTask(@RequestBody TestTask task) {
-		
-		logger.info("get task: {}.", toString(task));
+	public String execTask(@RequestBody ItmsScriptTask task) {
+		logger.info("receive task: {}", toString(task));
 		repo.save(task);
-		synchronized(testTaskMonitor) {
-			testTaskMonitor.notifyAll();
-		}
+		
 		return "success";
 	}
 	
 	@RequestMapping(value="taskStatus/{taskId}")
 	public Map<String, Object> queryTaskStatus(@PathVariable("taskId") int id){
-		TestTask task = repo.findTask(id);
-		if(task == null) {
-			throw new RuntimeException("taskId " + id + " not exist");
-		}
+		logger.debug("queryTaskStatus {}", id);
+		
+		ItmsScriptTask task = repo.findTaskById(id);
 		Map<String, Object> retm = new HashMap<>();
-		retm.put("id", task.getId());
-		retm.put("name", task.getName());
-		retm.put("status",  task.getStatus());
-		List<TestCase> tcs = task.getTestCase();
-		int cnt = 0;
-		for(TestCase tc: tcs) {
-			if(tc.getResult() != null && !"".equals(tc.getResult().toString())) {
-				cnt ++;
-			}
-		}
-		retm.put("progress",(int) ((float)cnt / tcs.size()) * 100);
+		retm.put("taskId", task.getTaskId());
+		retm.put("projectName", task.getProjectName());
+		retm.put("testCaseNumber", task.getTestCaseNumber());
+		retm.put("status", task.getStatus());
 		
 		return retm;
 	}
 	
 	@RequestMapping(value="task/{taskId}", method=RequestMethod.GET)
-	public TestTask queryTask(@PathVariable("taskId") int id) {
+	public ItmsScriptTask queryTask(@PathVariable("taskId") int id) {
+		logger.debug("queryTask {}", id);
 		
-		TestTask task = repo.findTask(id);
-		if(task == null) {
-			throw new RuntimeException(String.format("taskId %d not exist", id));
-		}
-		logger.info("after execution, testTask: {}", toString(task));
+		ItmsScriptTask task = repo.findById(id);
 		return task;
 	}
 	
 	@RequestMapping(value="task/{taskId}", method=RequestMethod.DELETE)
 	public void deleteTask(@PathVariable("taskId") int id) {
-		
-		repo.deleteTask(id);
-		
+		logger.debug("deleteTask {}", id);
+		repo.deleteById(id);
 	}
+
 	
 	String toString(Object o) {
 		ObjectMapper mapper = new ObjectMapper();

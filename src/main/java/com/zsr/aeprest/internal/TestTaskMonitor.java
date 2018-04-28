@@ -12,7 +12,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.zsr.aeprest.TestTaskRepository;
+import com.zsr.aeprest.dao.TestTaskRepository;
 import com.zsr.aeprest.entity.TestTask;
 
 

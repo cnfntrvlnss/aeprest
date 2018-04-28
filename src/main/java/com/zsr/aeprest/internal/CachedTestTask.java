@@ -5,7 +5,7 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
-import com.zsr.aeprest.TestTaskRepository;
+import com.zsr.aeprest.dao.TestTaskRepository;
 import com.zsr.aeprest.entity.TestCase;
 import com.zsr.aeprest.entity.TestTask;
 
