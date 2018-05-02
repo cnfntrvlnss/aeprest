@@ -22,7 +22,7 @@ result varchar(10),
 create index if not exists idx_testtaskcase_taskId on testtaskcase(taskId);
 
 create table if not exists itmsscripttask(
-task_id int not null primary key,
+task_id varchar(128) not null primary key,
 project_name varchar(128) not null,
 test_case_number varchar(128) not null,
 start_time timestamp,
@@ -32,7 +32,7 @@ result_url varchar(512),
 );
 
 create table if not exists itmsscriptparam(
-task_id int not null,
+task_id varchar(128) not null,
 machine_name varchar(50) not null,
 param_name varchar(50) not null,
 param_value varchar(512) not null,

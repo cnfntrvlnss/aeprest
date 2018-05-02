@@ -1,6 +1,7 @@
 package com.zsr.aeprest.internal;
 
 import java.io.Closeable;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -12,28 +13,21 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.zsr.aeprest.dao.TestTaskRepository;
-import com.zsr.aeprest.entity.TestTask;
+import com.zsr.aeprest.dao.ScriptTaskRepository;
+import com.zsr.aeprest.entity.ItmsScriptTask;
 
-
-/**
- * monitor task set, make all pending tasks to be finished, 
- * @author zhengshr
- *
- */
 @Component
-public class TestTaskMonitor implements Runnable, Closeable {
-
+public class ScriptTaskMonitor implements Runnable, Closeable{
 	static Logger logger = LoggerFactory.getLogger(TestTaskMonitor.class);
-	private TestTaskRepository repo;
 	
+	private ScriptTaskRepository repo;
 	private ExecutorService execService;
 	
 	@Autowired
-	public TestTaskMonitor(TestTaskRepository repo) {
+	public ScriptTaskMonitor(ScriptTaskRepository repo) {
 		this.repo = repo;
 		execService = Executors.newCachedThreadPool();
-		//execService.execute(this);
+		execService.execute(this);
 	}
 	
 	@Override
@@ -59,28 +53,37 @@ public class TestTaskMonitor implements Runnable, Closeable {
 	
 	@Override
 	public void run() {
-		logger.info("~~~~~~start to monitor pending TestTask to execute.");
-		List<TestTask> tasks = repo.findUnfinshedTask();
-		//logger.debug("return from findUnfinshedTask, size: {}", tasks.size());
-		for(TestTask task: tasks) {
-			CachedTestTask cached = new CachedTestTask(repo, task);
-			cached.setStatus(TestTask.Status.RUNNING);
-			execService.execute(new TestTaskConsumer(cached));
+		logger.info("start monitoring script tasks.");
+		//已经开始过的判定失败
+		List<ItmsScriptTask> tasks = repo.findByStatus(Arrays.asList(ItmsScriptTask.Status.START));
+		for(ItmsScriptTask task: tasks) {
+			logger.debug("history unfinished task {}, be re-assigned as BLOCK");
+			task.setStatus(ItmsScriptTask.Status.BLOCK);
+			repo.updateTask(task);
 		}
+		//已经调度过但未开始的，重新设定WAIT
+		tasks = repo.findByStatus(Arrays.asList(ItmsScriptTask.Status.READY));
+		for(ItmsScriptTask task: tasks) {
+			logger.debug("task having been scheduled, without reaching to START, be re-assigned as WAIT");
+			task.setStatus(ItmsScriptTask.Status.WAIT);
+			repo.updateTask(task);
+		}
+		
 		try {
 			while(true) {
-				logger.debug("~~~~~~~in loop to find new testTask to execute.");
-					synchronized(this) {
-						this.wait(60000);	
-					}
+				logger.debug("~~~~~~~in loop to find new scriptTask to execute.");
 				int thdcnt = ((ThreadPoolExecutor)execService).getActiveCount();
 				logger.debug("~~~~~~{} thread pool statistic, num of active threads: {}", this.toString(), thdcnt);
-				tasks = repo.findNewTask();
-				for(TestTask task: tasks) {
-					CachedTestTask cached = new CachedTestTask(repo, task);
-					cached.setStatus(TestTask.Status.RUNNING);
-					execService.execute(new TestTaskConsumer(cached));
+				tasks = repo.findByStatus(Arrays.asList(ItmsScriptTask.Status.WAIT));
+				for(ItmsScriptTask task: tasks) {
+					task.setStatus(ItmsScriptTask.Status.READY);
+					repo.updateTask(task);
+					execService.execute(new ScriptTaskConsumer(task, repo));
 				}
+				synchronized(this) {
+					this.wait(60000);	
+				}
+
 			}
 		} catch (InterruptedException e) {
 			e.printStackTrace();

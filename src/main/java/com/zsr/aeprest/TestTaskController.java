@@ -31,15 +31,15 @@ public class TestTaskController {
 	@Autowired
 	TestTaskRepository repo;
 	@Autowired
-	TestTaskMonitor testTaskMonitor;
+	TestTaskMonitor taskMonitor;
 	
 	@RequestMapping(value="executeTask", method=RequestMethod.POST)
 	public String execTask(@RequestBody TestTask task) {
 		
 		logger.info("get task: {}.", toString(task));
 		repo.save(task);
-		synchronized(testTaskMonitor) {
-			testTaskMonitor.notifyAll();
+		synchronized(taskMonitor) {
+			taskMonitor.notifyAll();
 		}
 		return "success";
 	}

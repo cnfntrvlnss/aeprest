@@ -6,7 +6,7 @@ import java.util.Map;
 
 public class ItmsScriptTask {
 
-	int taskId;
+	String taskId;
 	String projectName;
 	String testCaseNumber;
 	Date startTime;
@@ -14,15 +14,15 @@ public class ItmsScriptTask {
 	Status status;
 	String resultUrl;
 	public static enum Status{
-		WAIT, BLOCK, START, FAILED, SUCCESS
+		WAIT, READY, BLOCK, START, FAILED, SUCCESS
 	}
 	List<Map<String, String>> scriptParam;
 	
 	
-	public int getTaskId() {
+	public String getTaskId() {
 		return taskId;
 	}
-	public void setTaskId(int taskId) {
+	public void setTaskId(String taskId) {
 		this.taskId = taskId;
 	}
 	public String getProjectName() {

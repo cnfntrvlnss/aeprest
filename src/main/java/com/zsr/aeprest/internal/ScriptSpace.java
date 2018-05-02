@@ -20,7 +20,7 @@ public class ScriptSpace {
 	static Logger logger = LoggerFactory.getLogger(ScriptSpace.class);
 	static final String scriptDir = "test/script";
 	static final String scriptBackupDir = "test/script_bck";
-	static final String ftp_ip = "10.200.104.34";
+	static final String ftp_ip = "127.0.0.1";
 	static final String ftp_usr = "anonymous";
 	static final String ftp_pwd = "";
 	static {
@@ -72,7 +72,7 @@ public class ScriptSpace {
 		boolean bsucc = true;
 		long startms = System.currentTimeMillis();
 		if(!ftp.updateLocalDir(dirName, rootFile, recLi, nrecLi)) {
-			logger.error("failed to copy directory from ftp, {} ===> {}/{}", dirName, rootFile.getPath(), dirName);
+			logger.error("failed to copy directory from ftp, {} ===> {}", dirName, new File(rootFile, dirName));
 			bsucc = false;
 		}else {
 			

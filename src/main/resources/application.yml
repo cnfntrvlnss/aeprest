@@ -2,10 +2,10 @@ logging:
   level:
     root: DEBUG
 server:
-  port: 9080
+  port: 9081
 spring:
   datasource:
-    url: jdbc:h2:file:${user.home}/aeprest.db
+    url: jdbc:h2:file:${user.home}/aeprest1.db
     username: sa
     password: 
     driver-class-name: org.h2.Driver 

@@ -1,6 +1,7 @@
 package com.zsr.aeprest.dao;
 
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -12,6 +13,7 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementSetter;
+import org.springframework.jdbc.core.RowCallbackHandler;
 import org.springframework.stereotype.Repository;
 
 import com.zsr.aeprest.entity.ItmsScriptTask;
@@ -40,14 +42,14 @@ public class ScriptTaskRepository {
 		//insert itmsscriptparam table.
 		//rearrange scriptparam field in list format.
 		List<List<String>> lis = new ArrayList<>();
-		int taskId = task.getTaskId();
+		String taskId = task.getTaskId();
 		List<Map<String, String>> scriptParam = task.getScriptParam();
 		for(Map<String, String> group: scriptParam) {
 			String machineName = group.get("machine_name");
 			for(Map.Entry<String, String> entry: group.entrySet()) {
 				if(entry.getKey().equals("machine_name")) continue;
 				List<String> li = new ArrayList<>();
-				li.add(Integer.toString(taskId));
+				li.add(taskId);
 				li.add(machineName);
 				li.add(entry.getKey());
 				li.add(entry.getValue());
@@ -68,7 +70,6 @@ public class ScriptTaskRepository {
 				int idx = 1;
 				for(List<String> li: lis) {
 					Iterator<String> it = li.iterator();
-					arg0.setInt(idx++, Integer.valueOf(it.next()));
 					while(it.hasNext()) {
 						arg0.setString(idx++, it.next());
 					}
@@ -82,11 +83,11 @@ public class ScriptTaskRepository {
 		
 	}
 	
-	public boolean hasTask(int id) {
+	public boolean hasTask(String id) {
 		String SELECT_TASK_ID = "select task_id from itmsscripttask where task_id=?";
 
-		List<Integer> retIds = jdbc.query(SELECT_TASK_ID, (rs, rn)->{
-			return rs.getInt(1);
+		List<String> retIds = jdbc.query(SELECT_TASK_ID, (rs, rn)->{
+			return rs.getString(1);
 		}, id);
 		if(retIds.size() == 0) {
 			return false;
@@ -94,7 +95,7 @@ public class ScriptTaskRepository {
 		return true;
 	}
 	
-	public ItmsScriptTask findById(int id) {
+	public ItmsScriptTask findById(String id) {
 		ItmsScriptTask task = findTaskById(id);
 		Collection<Map<String, String>> params = findParamById(task.getTaskId()).values();
 		task.setScriptParam(new ArrayList<>(params));
@@ -102,17 +103,17 @@ public class ScriptTaskRepository {
 		return task;
 	}
 	
-	public ItmsScriptTask findTaskById(int id) {
+	public ItmsScriptTask findTaskById(String id) {
 		String SELECT_TASK_BY_ID = "select task_id, project_name, test_case_number, start_time, end_time, status, result_url "
 				+ "from itmsscripttask where task_id = ?";
 				
 		List<ItmsScriptTask> tasks = jdbc.query(SELECT_TASK_BY_ID, (rs, rn)->{
 			ItmsScriptTask ret = new ItmsScriptTask();
-			ret.setTaskId(rs.getInt(1));
+			ret.setTaskId(rs.getString(1));
 			ret.setProjectName(rs.getString(2));
 			ret.setTestCaseNumber(rs.getString(3));
-			ret.setStartTime(rs.getDate(4));
-			ret.setEndTime(rs.getDate(5));
+			ret.setStartTime(rs.getTimestamp(4));
+			ret.setEndTime(rs.getTimestamp(5));
 			ret.setStatus(ItmsScriptTask.Status.valueOf(rs.getString(6)));
 			ret.setResultUrl(rs.getString(7));
 			
@@ -127,7 +128,7 @@ public class ScriptTaskRepository {
 		return task;
 	}
 	
-	public Map<String, Map<String, String>> findParamById(int id) {
+	public Map<String, Map<String, String>> findParamById(String string) {
 		
 		String SELECT_SCRIPT_PARAM_BY_ID = "select task_id, machine_name, param_name, param_value "
 				+ "from itmsscriptparam where task_id = ?";
@@ -138,7 +139,7 @@ public class ScriptTaskRepository {
 			ret.add(rs.getString(3));
 			ret.add(rs.getString(4));
 			return ret;
-		}, id);
+		}, string);
 		
 		Map<String, Map<String, String>> scriptParams = new HashMap<>();
 		for(List<String> li: paramsList) {
@@ -157,33 +158,62 @@ public class ScriptTaskRepository {
 		return scriptParams;
 	}
 	
-	List<Integer> findAllIds(){
+	List<String> findAllIds(){
 		String SELECT_TASK_IDS = "select task_id from itmsscripttask;";
-		List<Integer> ret = jdbc.query(SELECT_TASK_IDS, (rs, rn)->{
-			return rs.getInt(1);
+		List<String> ret = jdbc.query(SELECT_TASK_IDS, (rs, rn)->{
+			return rs.getString(1);
 		});
 		return ret;
 	}
 	
 	public List<ItmsScriptTask> findAll(){
 		List<ItmsScriptTask> ret = new ArrayList<>();
-		for(int id: findAllIds()) {
+		for(String id: findAllIds()) {
 			ret.add(findById(id));
 		}
 		return ret;
 	}
 	
-	public void deleteById(int id) {
+	public void deleteById(String id) {
 		deleteParamsById(id);
 		String DELETE_SCRIPT_TASK_BY_ID = "delete from itmsscripttask where task_id = ?";
 		jdbc.update(DELETE_SCRIPT_TASK_BY_ID, id);
 	}
 	
-	public void deleteParamsById(int id) {
+	public void deleteParamsById(String id) {
 		String DELETE_SCRIPT_PARAM_BY_ID = "delete from itmsscriptparam where task_id = ?";
 		jdbc.update(DELETE_SCRIPT_PARAM_BY_ID, id);
 	}
 	
+	public List<ItmsScriptTask> findByStatus(List<ItmsScriptTask.Status> stats) {
+		String FIND_BY_STATUS = "select task_id from itmsscripttask where status in ";
+		StringBuilder sb = new StringBuilder();
+		sb.append("(");
+		Iterator<ItmsScriptTask.Status> it = stats.iterator();
+		sb.append("'" + it.next() + "'");
+		while(it.hasNext()) {
+			sb.append(", '" + it.next() + "'");
+		}
+		sb.append(")");
+		String findByStatus = FIND_BY_STATUS + sb.toString();
+		
+		
+		List<String> ids = jdbc.query(findByStatus, (rs, rn)->{
+			return rs.getString(1);
+		});
+		
+		List<ItmsScriptTask> ret = new ArrayList<>();
+		for(String id: ids) {
+			ret.add(findById(id));
+		}
+		
+		return ret;
+	}
+	
+	public void updateTask(ItmsScriptTask task) {
+		String UPDATE_TASK = "update itmsscripttask set start_time=?, end_time=?, status=?, result_url=? where task_id=?;";
+		jdbc.update(UPDATE_TASK, task.getStartTime(), task.getEndTime(), task.getStatus().toString(), task.getResultUrl(), task.getTaskId());
+	}
 }
 
 

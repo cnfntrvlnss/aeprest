@@ -82,7 +82,9 @@ public class MyFTPClient {
             ftp.setFileType(FTP.BINARY_FILE_TYPE);
             ftp.enterLocalPassiveMode();
             ftp.setUseEPSVwithIPv4(true);
-            ftp.changeWorkingDirectory(path);
+            if(!ftp.changeWorkingDirectory(path)) {
+            	throw new IOException("failed to changeWorkingDirectory, path: " + path);
+            }
             
 			return ret;
 		} catch(IOException e2) {
