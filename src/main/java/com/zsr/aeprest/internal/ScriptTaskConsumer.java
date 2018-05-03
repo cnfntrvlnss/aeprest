@@ -12,20 +12,27 @@ import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.zsr.aeprest.Application;
 import com.zsr.aeprest.dao.ScriptTaskRepository;
 import com.zsr.aeprest.entity.ItmsScriptTask;
 
 public class ScriptTaskConsumer implements Runnable{
 	Logger logger = LoggerFactory.getLogger(ScriptTaskConsumer.class);
 	
-	//TODO 存放result log的目录，要通过注入得到.
-	String testLogDirDir = "C:\\Users\\zhengshr\\aeptask\\";
+	String testLogUrl;
+	String testLogDirDir;
 	ItmsScriptTask scriptTask;
 	ScriptTaskRepository repository;
 	
 	public ScriptTaskConsumer(ItmsScriptTask task, ScriptTaskRepository repo) {
 		scriptTask = task;
 		repository = repo;
+		testLogDirDir = Application.env.getProperty("aep.result-root");
+		String aepIp = Application.env.getProperty("aep-ip");
+		String aepPort = Application.env.getProperty("server.port");
+		testLogUrl = "http://" + aepIp + ":" + aepPort + "/aep/download/";
+		logger.info("ScriptTaskConsumer has been configured, testLogDir: {}, testLogUrl: {}", testLogDirDir, testLogUrl);
+	
 	}
 	
 	boolean cleanDir(File DirFile) {
@@ -142,7 +149,7 @@ public class ScriptTaskConsumer implements Runnable{
 		}
 		Utilities.zipcompress(testLogDir);
 		File zipFile = new File(testLogDir.getParentFile(), testLogDir.getName() + ".zip");
-		scriptTask.setResultUrl(zipFile.getName());
+		scriptTask.setResultUrl(testLogUrl + zipFile.getName());
 		repository.updateTask(scriptTask);
 	}
 }

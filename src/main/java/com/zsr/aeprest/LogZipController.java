@@ -6,6 +6,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -18,12 +19,13 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("aep")
 public class LogZipController {
-
+	
+	@Value("${aep.result-root}")
+	String resultRoot;
 	
 	@RequestMapping("download/{filename:.+}")
 	public ResponseEntity<InputStreamResource> downloadLogZip(@PathVariable String filename){
-		File file = new File("C:\\Users\\zhengshr\\logs", filename);
-		System.err.println(file);
+		File file = new File(resultRoot, filename);
 		InputStream in = null;
 		int lengthOfStream = 0;
 		try {

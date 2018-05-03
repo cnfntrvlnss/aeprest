@@ -15,16 +15,22 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.zsr.aeprest.Application;
+
 
 public class ScriptSpace {
 	static Logger logger = LoggerFactory.getLogger(ScriptSpace.class);
 	static final String scriptDir = "test/script";
 	static final String scriptBackupDir = "test/script_bck";
-	static final String ftp_ip = "127.0.0.1";
-	static final String ftp_usr = "anonymous";
-	static final String ftp_pwd = "";
+	static  String ftp_ip = "";
+	static  String ftp_usr = "";
+	static  String ftp_pwd = "";
 	static {
 		checkdir(scriptDir, scriptBackupDir);
+		ftp_ip = Application.env.getProperty("aep.ftpclient.ip");
+		ftp_usr = Application.env.getProperty("aep.ftpclient.user");
+		ftp_pwd = Application.env.getProperty("aep.ftpclient.password");
+		logger.info("ftpclient for fetching scripts has been configured, ip: {}, usr: {}, pwd: {}", ftp_ip, ftp_usr, ftp_pwd);
 	}
 	
 	static void checkdir(String... dirs) {
