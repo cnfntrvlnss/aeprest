@@ -56,27 +56,29 @@ public class ScriptTaskRepository {
 				lis.add(li);
 			}
 		}
-		String insert_script_param = INSERT_SCRIPT_PARAM;
-		if(lis.size() > 1) {
-			StringBuilder sb  = new StringBuilder();
-			for(int i=0; i< lis.size() - 1; i++) {
-				sb.append(",(?,?,?,?)");
+		if(lis.size() > 0) {
+			String insert_script_param = INSERT_SCRIPT_PARAM;
+			if(lis.size() > 1) {
+				StringBuilder sb  = new StringBuilder();
+				for(int i=0; i< lis.size() - 1; i++) {
+					sb.append(",(?,?,?,?)");
+				}
+				insert_script_param += sb.toString();
 			}
-			insert_script_param += sb.toString();
-		}
-		PreparedStatementSetter pss = new PreparedStatementSetter() {
-			@Override
-			public void setValues(PreparedStatement arg0) throws SQLException {
-				int idx = 1;
-				for(List<String> li: lis) {
-					Iterator<String> it = li.iterator();
-					while(it.hasNext()) {
-						arg0.setString(idx++, it.next());
+			PreparedStatementSetter pss = new PreparedStatementSetter() {
+				@Override
+				public void setValues(PreparedStatement arg0) throws SQLException {
+					int idx = 1;
+					for(List<String> li: lis) {
+						Iterator<String> it = li.iterator();
+						while(it.hasNext()) {
+							arg0.setString(idx++, it.next());
+						}
 					}
 				}
-			}
-		};
-		jdbc.update(insert_script_param, pss);
+			};
+			jdbc.update(insert_script_param, pss);			
+		}
 		
 		//insert itmsscripttask table.
 		jdbc.update(INSERT_TASK, task.getTaskId(), task.getProjectName(), task.getTestCaseNumber(), task.getStatus().toString());

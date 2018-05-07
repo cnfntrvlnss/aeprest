@@ -28,7 +28,7 @@ public class ScriptTaskConsumer implements Runnable{
 		scriptTask = task;
 		repository = repo;
 		testLogDirDir = Application.env.getProperty("aep.result-root");
-		String aepIp = Application.env.getProperty("aep-ip");
+		String aepIp = Application.env.getProperty("aep_ip");
 		String aepPort = Application.env.getProperty("server.port");
 		testLogUrl = "http://" + aepIp + ":" + aepPort + "/aep/download/";
 		logger.info("ScriptTaskConsumer has been configured, testLogDir: {}, testLogUrl: {}", testLogDirDir, testLogUrl);
